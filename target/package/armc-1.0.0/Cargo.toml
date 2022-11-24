@@ -13,6 +13,8 @@
 edition = "2021"
 name = "armc"
 version = "1.0.0"
+description = "Armc is a rust implementation that facilitates Mutex access to variables."
+license = "MIT"
 repository = "https://github.com/patrickfp93/armc/"
 resolver = "2"
 

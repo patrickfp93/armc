@@ -31,14 +31,30 @@ impl<T> Armc<T> {
         result
     }
 
+    /// Returns a token([ArmcGuard<'_,T>]) for data to be securely modified.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use armc::Armc;
+    ///
+    /// let armc = Armc::new(5);
+    /// assert_eq!(*armc.lock(),5);
+    /// ```
     pub fn lock(&self) -> ArmcGuard<'_,T>{
         self.core.lock()
     }
 
+    /// Returns a token([ArmcRefGuard<'_,T>]) to block any thread that tries to modify the data,
+    /// guaranteeing its integrity for asynchronous reading.
     pub fn lock_ref(&self) -> ArmcRefGuard<'_,T>{
         self.core.lock_ref()
     }
 
+    /// Attempts to return data that is under the domain of [Armc<T>].
+    ///
+    /// # Errors
+    /// This function returns to itself as error, it is because there is another instance of [Armc<T>] pointing to the same data.
     pub fn try_unwrap(a : Self) -> Result<T,Self>{
         let address = a.address;
         let result = Arc::try_unwrap(a.core);
