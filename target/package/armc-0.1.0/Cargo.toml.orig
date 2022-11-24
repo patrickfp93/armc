@@ -1,8 +1,7 @@
 [package]
 name = "armc"
-version = "1.0.0"
+version = "0.1.0"
 edition = "2021"
-repository = "https://github.com/patrickfp93/armc/"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
