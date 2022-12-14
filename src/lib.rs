@@ -8,21 +8,13 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 
-pub struct Armc<T  :?Sized> {
+pub struct Armc<T:?Sized> {
     address : usize,
     core: Arc<Core<T>>,
 }
 
-impl<T> Armc<T> {
-    pub fn new(data: T) -> Self {        
-        let mut result = Self {
-            address : 0,
-            core: Arc::new(Core::new(data)),
-        };
-        result.address = get_address(result.as_ref());
-        result
-    }
-
+impl<T:?Sized> Armc<T> {
+    
     /// Returns a token([ArmcGuard<'_,T>]) for data to be securely modified.
     ///
     /// # Examples
@@ -43,28 +35,40 @@ impl<T> Armc<T> {
         self.core.lock_ref()
     }
 
+}
+
+impl<T: Sized> Armc<T>{
+    
+    pub fn new(data: T) -> Self {        
+        let mut result = Self {
+            address : 0,
+            core: Arc::new(Core::new(data)),
+        };
+        result.address = get_address(result.as_ref());
+        result
+    }
+
     /// Attempts to return data that is under the domain of [Armc<T>].
     ///
     /// # Errors
     /// This function returns to itself as error, it is because there is another instance of [Armc<T>] pointing to the same data.
-    pub fn try_unwrap(a : Self) -> Result<T,Self>{
+    pub fn try_unwrap(a : Self) -> Result<Box<T>,Self>{
         let address = a.address;
         let result = Arc::try_unwrap(a.core);
         match result {
-            Ok(core) => Ok(Core::unwrap(core)),
+            Ok(core) => Ok(Box::new(Core::unwrap(core))),
             Err(core) => Err(Armc{core,address}),
         }
     }
-
 }
 
-impl<T> AsRef<T> for Armc<T>{
+impl<T: ?Sized> AsRef<T> for Armc<T>{
     fn as_ref(&self) -> &T {
         self.core.as_ref()
     }
 }
 
-impl<T> Deref for Armc<T>{
+impl<T: ?Sized> Deref for Armc<T>{
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -73,13 +77,13 @@ impl<T> Deref for Armc<T>{
     }
 }
 
-impl<T> Clone for Armc<T>{
+impl<T: ?Sized> Clone for Armc<T>{
     fn clone(&self) -> Self {
         Self { address: self.address, core: self.core.clone() }
     }
 }
 
-impl<T> PartialEq for Armc<T>{
+impl<T: ?Sized> PartialEq for Armc<T>{
     fn eq(&self, other: &Self) -> bool {
         self.address == other.address
     }

@@ -9,14 +9,8 @@ pub(crate) struct Core<T: ?Sized> {
     data: UnsafeCell<T>,
 }
 
-impl<T> Core<T> {
-    pub fn new(data: T) -> Core<T> {
-        Core {
-            count_ref: AtomicUsize::default(),
-            looked: AtomicBool::default(),
-            data: UnsafeCell::new(data),
-        }
-    }
+impl<T: ?Sized> Core<T> {
+    
     pub fn lock(&self) -> ArmcGuard<'_, T> {
         while !self.looked.swap(true, Ordering::AcqRel)
             && self.count_ref.load(Ordering::Relaxed) > 0
@@ -45,6 +39,16 @@ impl<T> Core<T> {
         self.count_ref.fetch_sub(1, Ordering::Relaxed);
     }
 
+}
+
+impl<T : Sized> Core<T>{
+    pub fn new(data: T) -> Core<T> {
+        Core {
+            count_ref: AtomicUsize::default(),
+            looked: AtomicBool::default(),
+            data: UnsafeCell::new(data),
+        }
+    }
     pub fn unwrap(a: Self) -> T {
         a.data.into_inner()
     }
@@ -53,15 +57,15 @@ impl<T> Core<T> {
 use std::ops::{Deref, DerefMut};
 
 
-pub struct ArmcGuard<'a, T> {
+pub struct ArmcGuard<'a, T: ?Sized> {
     mutex: &'a mut Core<T>,
 }
 
-pub struct ArmcRefGuard<'a, T> {
+pub struct ArmcRefGuard<'a, T: ?Sized> {
     refex: &'a Core<T>,
 }
 
-impl<T> Deref for Core<T> {
+impl<T: ?Sized> Deref for Core<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -72,13 +76,13 @@ impl<T> Deref for Core<T> {
     }
 }
 
-impl<T> DerefMut for Core<T> {
+impl<T: ?Sized> DerefMut for Core<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe{&mut *self.data.get()}
     }
 }
 
-impl<T> Deref for ArmcGuard<'_, T> {
+impl<T: ?Sized> Deref for ArmcGuard<'_, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -86,19 +90,19 @@ impl<T> Deref for ArmcGuard<'_, T> {
     }
 }
 
-impl<T> DerefMut for ArmcGuard<'_, T> {
+impl<T: ?Sized> DerefMut for ArmcGuard<'_, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.mutex.deref_mut()
     }
 }
 
-impl<T> Drop for ArmcGuard<'_, T> {
+impl<T: ?Sized> Drop for ArmcGuard<'_, T> {
     fn drop(&mut self) {
         self.mutex.drop()
     }
 }
 
-impl<T> Deref for ArmcRefGuard<'_, T> {
+impl<T: ?Sized> Deref for ArmcRefGuard<'_, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -106,15 +110,15 @@ impl<T> Deref for ArmcRefGuard<'_, T> {
     }
 }
 
-impl<T> Drop for ArmcRefGuard<'_, T> {
+impl<T: ?Sized> Drop for ArmcRefGuard<'_, T> {
     fn drop(&mut self) {
         self.refex.drop_ref()
     }
 }
 
-unsafe impl<T> Send for ArmcGuard<'_, T> where T: Send {}
-unsafe impl<T> Sync for ArmcGuard<'_, T> where T: Send + Sync {}
+unsafe impl<T: ?Sized> Send for ArmcGuard<'_, T> where T: Send {}
+unsafe impl<T: ?Sized> Sync for ArmcGuard<'_, T> where T: Send + Sync {}
 
-unsafe impl<T> Send for Core<T> where T: Send {}
-unsafe impl<T> Sync for Core<T> where T: Send {}
+unsafe impl<T: ?Sized> Send for Core<T> where T: Send {}
+unsafe impl<T: ?Sized> Sync for Core<T> where T: Send {}
 
