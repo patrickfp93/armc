@@ -1,12 +1,12 @@
 use std::{
     hint::spin_loop,
-    sync::{atomic::{AtomicBool, AtomicUsize, Ordering}}
+    sync::{atomic::{AtomicBool, AtomicUsize, Ordering}}, cell::UnsafeCell
 };
 
-pub(crate) struct Core<T> {
+pub(crate) struct Core<T: ?Sized> {
     count_ref: AtomicUsize,
     looked: AtomicBool,
-    data: OptionCell<T>,
+    data: UnsafeCell<T>,
 }
 
 impl<T> Core<T> {
@@ -14,7 +14,7 @@ impl<T> Core<T> {
         Core {
             count_ref: AtomicUsize::default(),
             looked: AtomicBool::default(),
-            data: OptionCell::new(data),
+            data: UnsafeCell::new(data),
         }
     }
     pub fn lock(&self) -> ArmcGuard<'_, T> {
@@ -23,7 +23,10 @@ impl<T> Core<T> {
         {
             spin_loop();
         }
-        ArmcGuard { mutex: &self }
+        let ref_mut = unsafe {
+            &mut *(( self as *const Self) as *mut Self)
+        };
+        ArmcGuard { mutex: ref_mut }
     }
 
     pub fn lock_ref(&self) -> ArmcRefGuard<'_, T> {
@@ -43,16 +46,15 @@ impl<T> Core<T> {
     }
 
     pub fn unwrap(a: Self) -> T {
-        OptionCell::unwrap(a.data)
+        a.data.into_inner()
     }
 }
 
 use std::ops::{Deref, DerefMut};
 
-use crate::option_cell::OptionCell;
 
 pub struct ArmcGuard<'a, T> {
-    mutex: &'a Core<T>,
+    mutex: &'a mut Core<T>,
 }
 
 pub struct ArmcRefGuard<'a, T> {
@@ -66,7 +68,13 @@ impl<T> Deref for Core<T> {
         while self.looked.load(Ordering::SeqCst) {
             spin_loop();
         }
-        self.data.get_ref()
+        unsafe{&*self.data.get()}
+    }
+}
+
+impl<T> DerefMut for Core<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe{&mut *self.data.get()}
     }
 }
 
@@ -74,13 +82,13 @@ impl<T> Deref for ArmcGuard<'_, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
-        self.mutex.data.get_ref()
+        self.mutex.deref()
     }
 }
 
 impl<T> DerefMut for ArmcGuard<'_, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.mutex.data.get_mut()
+        self.mutex.deref_mut()
     }
 }
 
@@ -94,7 +102,7 @@ impl<T> Deref for ArmcRefGuard<'_, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
-        self.refex.data.get_ref()
+        self.refex.deref()
     }
 }
 

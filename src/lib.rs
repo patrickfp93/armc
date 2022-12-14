@@ -1,22 +1,14 @@
 mod tests;
 mod core;
-mod option_cell;
 
 use crate::core::Core;
 use crate::core::ArmcGuard;
 use crate::core::ArmcRefGuard;
 use std::ops::Deref;
 use std::sync::Arc;
-/*use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::Ordering;
 
 
-static COUNTER : AtomicUsize = AtomicUsize::new(1);
-fn get_id() -> usize { COUNTER.fetch_add(1, Ordering::Relaxed) }
-*/
-
-
-pub struct Armc<T> {
+pub struct Armc<T  :?Sized> {
     address : usize,
     core: Arc<Core<T>>,
 }
