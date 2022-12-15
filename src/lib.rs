@@ -37,7 +37,7 @@ impl<T:?Sized> Armc<T> {
 
 }
 
-impl<T: Sized> Armc<T>{
+impl<T> Armc<T>{
     
     pub fn new(data: T) -> Self {        
         let mut result = Self {
