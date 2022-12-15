@@ -54,3 +54,14 @@ fn test_cast_pointer_address_in_usize() {
     println!("oringinal number {} address:{:x?} and readed_n:{}",n,addr,readed_n);
 }
 
+#[test]
+fn test_unwrap() {
+    use std::sync::{Arc, Mutex};
+    use crate::Armc;
+    let result = Armc::new(5);
+    *result.lock() -= 1;
+    match Armc::try_unwrap(result) {
+        Ok(_) => assert!(true),
+        Err(_) => assert!(false),
+    }
+}
