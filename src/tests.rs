@@ -56,7 +56,6 @@ fn test_cast_pointer_address_in_usize() {
 
 #[test]
 fn test_unwrap() {
-    use std::sync::{Arc, Mutex};
     use crate::Armc;
     let result = Armc::new(5);
     *result.lock() -= 1;
