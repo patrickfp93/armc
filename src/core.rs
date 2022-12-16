@@ -122,3 +122,12 @@ unsafe impl<T: ?Sized> Sync for ArmcGuard<'_, T> where T: Send + Sync {}
 unsafe impl<T: ?Sized> Send for Core<T> where T: Send {}
 unsafe impl<T: ?Sized> Sync for Core<T> where T: Send {}
 
+
+/*use std::fmt::Debug;
+impl <T : Debug> Debug for Core<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Core").field("data", &self.data).finish()
+    }
+}*/
+
+

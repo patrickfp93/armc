@@ -59,6 +59,7 @@ fn test_unwrap() {
     use crate::Armc;
     let result = Armc::new(5);
     *result.lock() -= 1;
+    println!("{:?}",result);
     match Armc::try_unwrap(result) {
         Ok(_) => assert!(true),
         Err(_) => assert!(false),

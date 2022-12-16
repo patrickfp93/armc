@@ -7,9 +7,11 @@ use crate::core::ArmcRefGuard;
 use std::ops::Deref;
 use std::sync::Arc;
 
+use std::fmt::Debug;
+
 
 pub struct Armc<T:?Sized> {
-    address : usize,
+    ptr : usize,
     core: Arc<Core<T>>,
 }
 
@@ -41,10 +43,10 @@ impl<T> Armc<T>{
     
     pub fn new(data: T) -> Self {        
         let mut result = Self {
-            address : 0,
+            ptr : 0,
             core: Arc::new(Core::new(data)),
         };
-        result.address = get_address(result.as_ref());
+        result.ptr = get_address(result.as_ref());
         result
     }
 
@@ -53,11 +55,11 @@ impl<T> Armc<T>{
     /// # Errors
     /// This function returns to itself as error, it is because there is another instance of [Armc<T>] pointing to the same data.
     pub fn try_unwrap(a : Self) -> Result<Box<T>,Self>{
-        let address = a.address;
+        let address = a.ptr;
         let result = Arc::try_unwrap(a.core);
         match result {
             Ok(core) => Ok(Box::new(Core::unwrap(core))),
-            Err(core) => Err(Armc{core,address}),
+            Err(core) => Err(Armc{core,ptr: address}),
         }
     }
 }
@@ -79,13 +81,13 @@ impl<T: ?Sized> Deref for Armc<T>{
 
 impl<T: ?Sized> Clone for Armc<T>{
     fn clone(&self) -> Self {
-        Self { address: self.address, core: self.core.clone() }
+        Self { ptr: self.ptr, core: self.core.clone() }
     }
 }
 
 impl<T: ?Sized> PartialEq for Armc<T>{
     fn eq(&self, other: &Self) -> bool {
-        self.address == other.address
+        self.ptr == other.ptr
     }
 }
 
@@ -114,3 +116,11 @@ impl<T> From<Armc<T>> for Arc<std::sync::Mutex<T>>{
         Arc::new(std::sync::Mutex::new(data))
     }
 }
+
+impl <T : Debug> Debug for Armc<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = &*self.core.as_ref().lock_ref();
+        f.debug_struct("Armc").field("value", value).finish()
+    }
+}
+
