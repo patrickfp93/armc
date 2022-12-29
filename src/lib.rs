@@ -54,11 +54,11 @@ impl<T> Armc<T>{
     ///
     /// # Errors
     /// This function returns to itself as error, it is because there is another instance of [Armc<T>] pointing to the same data.
-    pub fn try_unwrap(a : Self) -> Result<Box<T>,Self>{
+    pub fn try_unwrap(a : Self) -> Result<T,Self>{
         let address = a.ptr;
         let result = Arc::try_unwrap(a.core);
         match result {
-            Ok(core) => Ok(Box::new(Core::unwrap(core))),
+            Ok(core) => Ok(Core::unwrap(core)),
             Err(core) => Err(Armc{core,ptr: address}),
         }
     }
