@@ -3,6 +3,14 @@ use std::{
     sync::{atomic::{AtomicBool, AtomicUsize, Ordering}}, cell::UnsafeCell
 };
 
+pub mod armc_ref_guard;
+pub mod armc_guard;
+
+
+use std::ops::{Deref, DerefMut};
+
+use self::{armc_ref_guard::ArmcRefGuard, armc_guard::ArmcGuard};
+
 pub(crate) struct Core<T: ?Sized> {
     count_ref: AtomicUsize,
     looked: AtomicBool,
@@ -20,7 +28,7 @@ impl<T: ?Sized> Core<T> {
         let ref_mut = unsafe {
             &mut *(( self as *const Self) as *mut Self)
         };
-        ArmcGuard { mutex: ref_mut }
+        ArmcGuard::new(ref_mut)
     }
 
     pub fn lock_ref(&self) -> ArmcRefGuard<'_, T> {
@@ -28,7 +36,7 @@ impl<T: ?Sized> Core<T> {
             spin_loop();
         }
         self.count_ref.fetch_add(1, Ordering::Relaxed);
-        ArmcRefGuard { refex: &self }
+        ArmcRefGuard::new(&self)
     }
 
     fn drop(&self) {
@@ -54,16 +62,6 @@ impl<T : Sized> Core<T>{
     }
 }
 
-use std::ops::{Deref, DerefMut};
-
-
-pub struct ArmcGuard<'a, T: ?Sized> {
-    mutex: &'a mut Core<T>,
-}
-
-pub struct ArmcRefGuard<'a, T: ?Sized> {
-    refex: &'a Core<T>,
-}
 
 impl<T: ?Sized> Deref for Core<T> {
     type Target = T;
@@ -82,46 +80,9 @@ impl<T: ?Sized> DerefMut for Core<T> {
     }
 }
 
-impl<T: ?Sized> Deref for ArmcGuard<'_, T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        self.mutex.deref()
-    }
-}
-
-impl<T: ?Sized> DerefMut for ArmcGuard<'_, T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.mutex.deref_mut()
-    }
-}
-
-impl<T: ?Sized> Drop for ArmcGuard<'_, T> {
-    fn drop(&mut self) {
-        self.mutex.drop()
-    }
-}
-
-impl<T: ?Sized> Deref for ArmcRefGuard<'_, T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        self.refex.deref()
-    }
-}
-
-impl<T: ?Sized> Drop for ArmcRefGuard<'_, T> {
-    fn drop(&mut self) {
-        self.refex.drop_ref()
-    }
-}
-
-unsafe impl<T: ?Sized> Send for ArmcGuard<'_, T> where T: Send {}
-unsafe impl<T: ?Sized> Sync for ArmcGuard<'_, T> where T: Send + Sync {}
 
 unsafe impl<T: ?Sized> Send for Core<T> where T: Send {}
 unsafe impl<T: ?Sized> Sync for Core<T> where T: Send {}
-
 
 /*use std::fmt::Debug;
 impl <T : Debug> Debug for Core<T> {
@@ -129,5 +90,3 @@ impl <T : Debug> Debug for Core<T> {
         f.debug_struct("Core").field("data", &self.data).finish()
     }
 }*/
-
-

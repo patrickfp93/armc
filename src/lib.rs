@@ -1,9 +1,9 @@
 mod tests;
-mod core;
+pub mod core;
 
 use crate::core::Core;
-use crate::core::ArmcGuard;
-use crate::core::ArmcRefGuard;
+use crate::core::armc_ref_guard::{ArmcRefGuard};
+use crate::core::armc_guard::ArmcGuard;
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -44,7 +44,7 @@ impl<T> Armc<T>{
     pub fn new(data: T) -> Self {        
         let mut result = Self {
             ptr : 0,
-            core: Arc::new(Core::new(data)),
+            core: Arc::new(Core::new(data))
         };
         result.ptr = get_address(result.as_ref());
         result
@@ -123,4 +123,5 @@ impl <T : Debug> Debug for Armc<T> {
         f.debug_struct("Armc").field("value", value).finish()
     }
 }
+
 
