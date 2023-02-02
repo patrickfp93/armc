@@ -26,19 +26,24 @@ let armc = Armc::new(5);
 ### lock_ref:
 Acesso aos dados de um objeto Armc
 Você pode acessar os dados armazenados bloqueando possíveis mutações. Pode ser feito multiplos acessos em paralelo.
-
-    let data = armc.lock_ref();
-    println!("Data: {:?}", data);
+```rust
+let data = armc.lock_ref();
+println!("Data: {:?}", data);
+```
 ### lock:
 Modificação de dados de um objeto Armc
 Para modificar os dados de um objeto Armc, você precisa usar o método lock, o mesmo bloqueará todos os acessos de mutação:
-
-    let mut data = armc.lock();
-    *data = 10;
-    println!("Data: {:?}", data);
+```rust
+let mut data = armc.lock();
+*data = 10;
+println!("Data: {:?}", data);
+```
 ### Clonagem de um objeto Armc
 Você pode clonar um objeto Armc usando o método clone:
-    let armc_clone = armc.clone();
-    println!("Data: {:?}", *armc_clone.lock_ref());
+```rust
+let armc_clone = armc.clone();
+println!("Data: {:?}", *armc_clone.lock_ref());
+```
+    
 ## Contribuição
 Contribuições são bem-vindas! Sinta-se livre para abrir uma issue ou enviar uma pull request.
