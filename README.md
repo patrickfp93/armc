@@ -54,6 +54,11 @@ The `object_with_new!` macro is similar to the `object!` macro, but it also gene
 The `object_ref_access!` macro is similar to the `object_with_new!` macro, but it also generates getter methods for each field.
 
 The `object_mut_access!` macro is similar to the `object_ref_access!` macro, but it also generates mutable setter methods for each field with the suffix `_mut`.
+Attention! you need a crate `paste` dependency in your project for object_mut_access to work.
+```
+[dependencies]
+paste = "1.0.12"
+```
 
 These macros are designed to save time and effort when creating structs with thread-safe access to their fields, and can be used in the following way:
 
