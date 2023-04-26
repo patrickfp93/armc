@@ -1,5 +1,6 @@
 mod tests;
 pub mod core;
+pub mod object;
 
 use crate::core::Core;
 use crate::core::armc_ref_guard::{ArmcRefGuard};

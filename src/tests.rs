@@ -1,3 +1,5 @@
+use crate::Armc;
+
 #[cfg(test)]
 
 #[test]
@@ -64,4 +66,16 @@ fn test_unwrap() {
         Ok(_) => assert!(true),
         Err(_) => assert!(false),
     }
+}
+
+#[test]
+fn test_object() {
+    crate::object_mut_access!(A{value : usize});
+
+    let mut  a = A::new(4);
+
+    a.value_mut(10);
+
+    assert_eq!(*a.value(), 10);
+
 }
