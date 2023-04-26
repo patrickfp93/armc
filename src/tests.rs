@@ -1,5 +1,3 @@
-use crate::Armc;
-
 #[cfg(test)]
 
 #[test]
@@ -70,6 +68,7 @@ fn test_unwrap() {
 
 #[test]
 fn test_object() {
+    use crate::Armc;
     crate::object_mut_access!(A{value : usize});
 
     let mut  a = A::new(4);

@@ -16,6 +16,7 @@
 #[macro_export]
 macro_rules! object {
     ($name:ident { $($field:ident : $type:ty),* }) => {
+
         #[derive(Debug)]
         struct Base {
             $(pub $field: $type),*
