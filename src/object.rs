@@ -16,24 +16,13 @@
 #[macro_export]
 macro_rules! object {
     ($vis:vis $name:ident { $($field:ident : $type:ty),* }) => {
-        #[derive(Debug)]
         struct Base {
             $(pub $field: $type),*
         }
 
-        #[allow(non_snake_case)]
-        #[derive(Debug,Clone,PartialEq)]
+        #[derive(Clone,PartialEq)]
         $vis struct $name {
             base : Armc<Base>,
-        }
-
-        #[allow(dead_code)]
-        impl From<Base> for $name {
-            fn from(base: Base) -> Self {
-                $name {
-                    base: Armc::new(base),
-                }
-            }
         }
 
     };
@@ -53,8 +42,14 @@ macro_rules! object {
 #[macro_export]
 macro_rules! object_with_new {
     ($vis:vis $name:ident { $($field:ident : $type:ty),* }) => {
-        crate::object!($vis $name { $($field : $type),* });
+        struct Base {
+            $(pub $field: $type),*
+        }
 
+        #[derive(Clone,PartialEq)]
+        $vis struct $name {
+            base : Armc<Base>,
+        }
         /// A constructor that creates a new instance of the struct with the given field values.
         ///
         /// # Arguments
@@ -102,9 +97,22 @@ macro_rules! object_with_new {
 #[macro_export]
 macro_rules! object_ref_access {
     ($vis:vis $name:ident { $($field:ident : $type:ty),* }) => {
-        crate::object_with_new!($vis $name { $($field : $type),* });
+        struct Base {
+            $(pub $field: $type),*
+        }
 
-        impl $name {
+        #[derive(Clone,PartialEq)]
+        $vis struct $name {
+            base : Armc<Base>,
+        }
+            impl $name {
+                pub fn new($($field: $type),*) -> Self {
+                    $name {
+                        base: Armc::new(Base {
+                            $($field: $field),*
+                        })
+                    }
+                }
             $(
                 // Generate getter
                 pub fn $field(&self) -> &$type {
@@ -122,8 +130,6 @@ macro_rules! object_ref_access {
 /// # Example
 ///
 /// ```
-/// #[macro_use]
-/// extern crate my_crate;
 ///
 /// object_mut_access!(MyStruct {
 ///     foo: u32,
@@ -140,9 +146,31 @@ macro_rules! object_ref_access {
 #[macro_export]
 macro_rules! object_mut_access {
     ($vis:vis $name:ident { $($field:ident : $type:ty),* }) => {
-        crate::object_ref_access!($vis $name { $($field : $type),* });
+        struct Base {
+            $(pub $field: $type),*
+        }
 
-        paste::paste! {
+        #[derive(Clone,PartialEq)]
+        $vis struct $name {
+            base : Armc<Base>,
+        }
+            impl $name {
+                pub fn new($($field: $type),*) -> Self {
+                    $name {
+                        base: Armc::new(Base {
+                            $($field: $field),*
+                        })
+                    }
+                }
+            $(
+                // Generate getter
+                pub fn $field(&self) -> &$type {
+                    &self.base.$field
+                }
+            )*
+        }
+        use paste::paste;
+        paste! {
         impl $name {
             $(
                 // Generate mutable setter

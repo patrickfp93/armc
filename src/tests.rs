@@ -76,7 +76,7 @@ fn test_object() {
     }
 
     let mut a = ta::A::new(4);
-
+    
     a.value_mut(10);
 
     assert_eq!(*a.value(), 10);
