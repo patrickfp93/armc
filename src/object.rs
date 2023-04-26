@@ -6,7 +6,7 @@
 /// #[macro_use]
 /// extern crate my_crate;
 ///
-/// object!(MyStruct {
+/// object!(pub MyStruct {
 ///     foo: u32,
 ///     bar: String,
 /// });
@@ -15,8 +15,7 @@
 /// ```
 #[macro_export]
 macro_rules! object {
-    ($name:ident { $($field:ident : $type:ty),* }) => {
-
+    ($vis:vis $name:ident { $($field:ident : $type:ty),* }) => {
         #[derive(Debug)]
         struct Base {
             $(pub $field: $type),*
@@ -24,12 +23,11 @@ macro_rules! object {
 
         #[allow(non_snake_case)]
         #[derive(Debug,Clone,PartialEq)]
-        struct $name {
+        $vis struct $name {
             base : Armc<Base>,
         }
 
         #[allow(dead_code)]
-
         impl From<Base> for $name {
             fn from(base: Base) -> Self {
                 $name {
@@ -54,8 +52,8 @@ macro_rules! object {
 
 #[macro_export]
 macro_rules! object_with_new {
-    ($name:ident { $($field:ident : $type:ty),* }) => {
-        crate::object!($name { $($field : $type),* });
+    ($vis:vis $name:ident { $($field:ident : $type:ty),* }) => {
+        crate::object!($vis $name { $($field : $type),* });
 
         /// A constructor that creates a new instance of the struct with the given field values.
         ///
@@ -70,7 +68,7 @@ macro_rules! object_with_new {
         /// let my_struct = MyStruct::new(42, "hello".to_string());
         /// ```
             impl $name {
-                fn new($($field: $type),*) -> Self {
+                pub fn new($($field: $type),*) -> Self {
                     $name {
                         base: Armc::new(Base {
                             $($field: $field),*
@@ -103,13 +101,13 @@ macro_rules! object_with_new {
 /// ```
 #[macro_export]
 macro_rules! object_ref_access {
-    ($name:ident { $($field:ident : $type:ty),* }) => {
-        crate::object_with_new!($name { $($field : $type),* });
+    ($vis:vis $name:ident { $($field:ident : $type:ty),* }) => {
+        crate::object_with_new!($vis $name { $($field : $type),* });
 
         impl $name {
             $(
                 // Generate getter
-                fn $field(&self) -> &$type {
+                pub fn $field(&self) -> &$type {
                     &self.base.$field
                 }
             )*
@@ -141,14 +139,14 @@ macro_rules! object_ref_access {
 /// ```
 #[macro_export]
 macro_rules! object_mut_access {
-    ($name:ident { $($field:ident : $type:ty),* }) => {
-        crate::object_ref_access!($name { $($field : $type),* });
+    ($vis:vis $name:ident { $($field:ident : $type:ty),* }) => {
+        crate::object_ref_access!($vis $name { $($field : $type),* });
 
         paste::paste! {
         impl $name {
             $(
                 // Generate mutable setter
-                fn  [<$field _mut>] (&mut self, value: $type) -> &mut Self {
+                pub fn [<$field _mut>] (&mut self, value: $type) -> &mut Self {
                     self.base.lock().$field = value;
                     self
                 }
